@@ -25,7 +25,7 @@ dependencies {
     implementation 'org.kohsuke.args4j:args4j-maven-plugin:2.33'
 
 
-    testImplementation 'org.junit.jupiter:junit-jupiter:5.8.2'
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.8.1'
 }
 
 tasks.named('test') {
