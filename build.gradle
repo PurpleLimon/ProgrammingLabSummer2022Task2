@@ -9,11 +9,6 @@ repositories {
     mavenCentral()
 }
 sourceSets {
-    main {
-        java {
-            srcDirs = ["src/main/java"]
-        }
-    }
     test {
         java {
             srcDirs = ["src/test/java"]
@@ -21,5 +16,13 @@ sourceSets {
     }
 }
 dependencies {
-    testImplementation 'junit:junit:4.13.2'
+    // https://mvnrepository.com/artifact/org.kohsuke.args4j/args4j-maven-plugin
+    implementation 'org.kohsuke.args4j:args4j-maven-plugin:2.33'
+
+
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.8.2'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
 }
