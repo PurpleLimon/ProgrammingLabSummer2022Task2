@@ -3,7 +3,6 @@ plugins {
 }
 
 group 'org.example'
-version '1.0-SNAPSHOT'
 
 repositories {
     mavenCentral()
@@ -24,6 +23,8 @@ dependencies {
     // https://mvnrepository.com/artifact/org.kohsuke.args4j/args4j-maven-plugin
     implementation 'org.kohsuke.args4j:args4j-maven-plugin:2.33'
 
+    // https://mvnrepository.com/artifact/commons-io/commons-io
+    implementation 'commons-io:commons-io:2.11.0'
 
     testImplementation 'org.junit.jupiter:junit-jupiter:5.8.1'
 }

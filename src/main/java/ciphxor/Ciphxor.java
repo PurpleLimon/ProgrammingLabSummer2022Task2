@@ -1,38 +1,27 @@
 package ciphxor;
 
 import java.io.*;
-import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
-import java.util.Queue;
 
 public class Ciphxor {
 
     private final String inputFileName;
     private final String outputFileName;
-    private final String key;
+    private final HexKey key;
 
     public Ciphxor(String inputName, String key, String outputName) {
         inputFileName = inputName;
-        this.key = key;
-        if (outputName == null) {
-            outputFileName = Utils.IO.genOutputFileName(inputName, "_o");
-            return;
-        }
-        outputFileName = outputName;
+        this.key = new HexKey(key);
+        outputFileName = outputName != null? outputName : IOUtils.genOutputFileName(inputName, "_o");
     }
 
     public void applyAlgorithm() throws IOException {
-        try (InputStream input = new FileInputStream(inputFileName)){
-            try (OutputStream output = new FileOutputStream(outputFileName)) {
-                byte[] inputBytes = new byte[1];
-                int bytesRead = input.readNBytes(inputBytes, 0, 1);
-                int keyIndex = 0;
+        try (BufferedInputStream input = new BufferedInputStream(new FileInputStream(inputFileName))) {
+            try (BufferedOutputStream output = new BufferedOutputStream (new FileOutputStream(outputFileName))) {
+                byte[] inputBytes = new byte[key.getLength()];
+                int bytesRead = input.readNBytes(inputBytes, 0, key.getLength());
                 while (bytesRead > 0){
-                    for (int i = 0; i < bytesRead; i ++) {
-                        output.write(inputBytes[i] ^ Utils.StringUtils.readHexAt(key, keyIndex, keyIndex + 2));
-                        keyIndex = (keyIndex + 2) % key.length();
-                    }
-                    bytesRead = input.readNBytes(inputBytes, 0, 1);
+                    output.write(key.applyXorTo(inputBytes, bytesRead));
+                    bytesRead = input.readNBytes(inputBytes, 0, key.getLength());
                 }
             }
         }

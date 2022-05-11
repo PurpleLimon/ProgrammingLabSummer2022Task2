@@ -1,10 +1,13 @@
-import ciphxor.Utils;
+import ciphxor.IOUtils;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.*;
 
 import ciphxor.Ciphxor;
+import org.junit.jupiter.api.io.TempDir;
 
 public class Tests {
     private void assertEqualsFilesContent(String input, String expectedOutput) {
@@ -53,95 +56,89 @@ public class Tests {
         }
     }
 
+    private void singleTest (String inputName, String encryptedName, String decryptedName, String key) throws IOException {
+        //check if encrypts
+        new Ciphxor(inputName, key, encryptedName).applyAlgorithm();
+        if (key.replace("0", "").isEmpty()) {
+            assertEqualsFilesContent(inputName, encryptedName);
+        } else {
+            assertNotEqualsFilesContent(inputName, encryptedName);
+        }
+
+        //check if decrypts successfully
+        new Ciphxor(encryptedName, key, decryptedName).applyAlgorithm();
+        assertEqualsFilesContent(decryptedName, inputName);
+    }
+
+    private void singleTest (String inputName, String key) throws IOException {
+        String tempInputCopy = tempDir.getPath() + "\\" + FilenameUtils.getName(inputName);
+        FileUtils.copyFile(new File(inputName), new File(tempInputCopy));
+
+        String encryptedName = IOUtils.genOutputFileName(tempInputCopy, "_o");
+        String decryptedName = IOUtils.genOutputFileName(encryptedName, "_decoded");
+
+        //check if encrypts
+        new Ciphxor(tempInputCopy, key, null).applyAlgorithm();
+        if (key.replace("0", "").isEmpty()) {
+            assertEqualsFilesContent(inputName, encryptedName);
+        } else {
+            assertNotEqualsFilesContent(inputName, encryptedName);
+        }
+
+        //check if decrypts successfully
+        new Ciphxor(encryptedName, key, decryptedName).applyAlgorithm();
+        assertEqualsFilesContent(decryptedName, inputName);
+    }
+
+    @TempDir
+    static File tempDir;
+
+    static final String RES_PATH = "src/test/resources/inputs";
+
     @Test
     void mainTests() throws IOException {
-        String dirName = ".testArtifacts";
-        Utils.IO.UseArtifactDir("src/inputs/" + dirName, () -> {
-            final int TESTS_AMOUNT = 7;
-            for(int i = 1; i <= TESTS_AMOUNT - 1; i++) {
-                String key = Utils.StringUtils.genRandomKey();
-                String inputName = String.format("src/inputs/input_%03d.txt", i);
-                String encryptedName = String.format("src/inputs/%s/output_%03d_coded.txt",dirName, i);
-                String decryptedName = String.format("src/inputs/%s/output_%03d_decoded.txt", dirName, i);
+        final int TESTS_AMOUNT = 7;
+        for(int i = 1; i <= TESTS_AMOUNT; i++) {
+            String key = TestUtils.genRandomKey();
+            String inputName = String.format("%s/input_%03d.txt", RES_PATH, i);
+            String encryptedName = String.format("%s/output_%03d_coded.txt", tempDir.getPath(), i);
+            String decryptedName = String.format("%s/output_%03d_decoded.txt", tempDir.getPath(), i);
 
-                //check if encrypts
-                new Ciphxor(inputName, key, encryptedName).applyAlgorithm();
-                assertNotEqualsFilesContent(inputName, encryptedName);
+            singleTest(inputName, encryptedName, decryptedName, key);
+        }
+    }
 
-                //check if decrypts successfully
-                new Ciphxor(encryptedName, key, decryptedName).applyAlgorithm();
-                assertEqualsFilesContent(decryptedName, inputName);
-            }
-
-            final String KEY = Utils.StringUtils.genRandomKey();
-            String inputName = String.format("src/inputs/input_%03d.txt", TESTS_AMOUNT);
-            String encryptedName = String.format("src/inputs/input_%03d_o.txt", TESTS_AMOUNT);
-            String decryptedName = String.format("src/inputs/input_%03d_o_decoded.txt",TESTS_AMOUNT);
-
-            //check if encrypts
-            new Ciphxor(inputName, KEY, null).applyAlgorithm();
-            assertNotEqualsFilesContent(inputName, encryptedName);
-
-            //check if decrypts successfully
-            new Ciphxor(encryptedName, KEY, decryptedName).applyAlgorithm();
-            assertEqualsFilesContent(decryptedName, inputName);
-        });
+    @Test
+    void nullOutputNameTest() throws IOException {
+        final int TESTS_AMOUNT = 7;
+        for(int i = 1; i <= TESTS_AMOUNT; i++) {
+            final String KEY = TestUtils.genRandomKey();
+            String inputName = String.format("%s/input_%03d.txt", RES_PATH, i);
+            singleTest(inputName, KEY);
+        }
     }
 
     @Test
     void randomTests() throws IOException {
-        String dirName = ".testArtifacts";
-        Utils.IO.UseArtifactDir("src/inputs/" + dirName, () -> {
-            final int TESTS_AMOUNT = 20;
-            for (int i = 1; i <= TESTS_AMOUNT; i++) {
-                try (OutputStream randFile = new FileOutputStream(
-                        String.format("src/inputs/%s/genInput_%03d.txt", dirName, i)
-                )) {
-                    int fileLength = (int) (Math.random() * 50 + 50);
-                    for (int j = 0; j < fileLength; j++) {
-                        randFile.write((char)(Math.random() * 255));
-                    }
-                }
-            }
+        final int TESTS_AMOUNT = 20;
+        for (int i = 1; i <= TESTS_AMOUNT; i++) {
+            TestUtils.genRandomFile(String.format("%s/genInput_%03d.txt", tempDir.getPath(), i));
+        }
 
-            for (int i = 1; i <= TESTS_AMOUNT - 1; i++) {
-                String key = Utils.StringUtils.genRandomKey();
-                //check if encrypted
-                new Ciphxor(String.format("src/inputs/%s/genInput_%03d.txt", dirName, i),
-                        key,
-                        String.format("src/inputs/%s/output_%03d_coded.txt", dirName, i)).applyAlgorithm();
-                assertNotEqualsFilesContent(
-                        String.format("src/inputs/%s/genInput_%03d.txt", dirName, i),
-                        String.format("src/inputs/%s/output_%03d_coded.txt", dirName, i)
-                );
+        for (int i = 1; i <= TESTS_AMOUNT - 1; i++) {
+            String key = TestUtils.genRandomKey();
+            String inputName = String.format("%s/genInput_%03d.txt", tempDir.getPath(), i);
+            String encryptedName = String.format("%s/output_%03d_coded.txt", tempDir.getPath(), i);
+            String decryptedName = String.format("%s/output_%03d_decoded.txt", tempDir.getPath(), i);
 
-                //check if decrypted successfully
-                new Ciphxor(String.format("src/inputs/%s/output_%03d_coded.txt", dirName, i),
-                        key,
-                        String.format("src/inputs/%s/output_%03d_decoded.txt", dirName, i)).applyAlgorithm();
-                assertEqualsFilesContent(
-                        String.format("src/inputs/%s/output_%03d_decoded.txt", dirName, i),
-                        String.format("src/inputs/%s/genInput_%03d.txt", dirName, i)
-                );
-            }
+            singleTest(inputName, encryptedName, decryptedName, key);
+        }
 
-            final String KEY = "0a00";
-            new Ciphxor(String.format("src/inputs/%s/genInput_%03d.txt", dirName, TESTS_AMOUNT),
-                    KEY,
-                    String.format("src/inputs/%s/output_%03d_coded.txt", dirName, TESTS_AMOUNT)).applyAlgorithm();
-            assertNotEqualsFilesContent(
-                    String.format("src/inputs/%s/genInput_%03d.txt", dirName, TESTS_AMOUNT),
-                    String.format("src/inputs/%s/output_%03d_coded.txt", dirName, TESTS_AMOUNT)
-            );
+        final String KEY = "0000";
 
-            //check if decrypted successfully
-            new Ciphxor(String.format("src/inputs/%s/output_%03d_coded.txt", dirName, TESTS_AMOUNT),
-                    KEY,
-                    String.format("src/inputs/%s/output_%03d_decoded.txt", dirName, TESTS_AMOUNT)).applyAlgorithm();
-            assertEqualsFilesContent(
-                    String.format("src/inputs/%s/output_%03d_decoded.txt", dirName, TESTS_AMOUNT),
-                    String.format("src/inputs/%s/genInput_%03d.txt", dirName, TESTS_AMOUNT)
-            );
-        });
+        String inputName = String.format("%s/genInput_%03d.txt", tempDir.getPath(), TESTS_AMOUNT);
+        String encryptedName = String.format("%s/output_%03d_coded.txt", tempDir.getPath(), TESTS_AMOUNT);
+        String decryptedName = String.format("%s/output_%03d_decoded.txt", tempDir.getPath(), TESTS_AMOUNT);
+        singleTest(inputName, encryptedName, decryptedName, KEY);
     }
 }

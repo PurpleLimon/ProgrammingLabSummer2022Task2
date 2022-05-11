@@ -1,0 +1,13 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="allTests" type="CompoundRunConfigurationType">
+    <toRun name="CiphxorLauncher_NoArguments" type="Application" />
+    <toRun name="CiphxorLauncher_Basic_Full" type="Application" />
+    <toRun name="CiphxorLauncher_Basic_NoOutput" type="Application" />
+    <toRun name="CiphxorLauncher_NoFileFound" type="Application" />
+    <toRun name="CiphxorLauncher_1Arg" type="Application" />
+    <toRun name="CiphxorLauncher_NotHexKey" type="Application" />
+    <toRun name="CiphxorLauncher_TooManyArguments" type="Application" />
+    <toRun name="Tests" type="GradleRunConfiguration" />
+    <method v="2" />
+  </configuration>
+</component>
